@@ -1,0 +1,111 @@
+---
+title: "K-NN"
+output: 
+  html_document: 
+    fig_height: 4
+    highlight: pygments
+    theme: spacelab
+---
+
+## Setup
+
+### Load packages
+
+```{r load-packages, message = FALSE}
+library(ggplot2)
+library(dplyr)
+library(statsr)
+```
+
+### Load data
+
+
+```{r load-data}
+library(ISLR)
+head(iris)
+```
+
+
+
+* * *
+
+## Part 1: Data
+```{r}
+str(iris)
+```
+
+
+* * *
+
+## Part 2: Feature  Scaling
+
+```{r}
+stand.features <- scale(iris[1:4])
+var(stand.features[,1])
+```
+
+```{r}
+final.data <- cbind(stand.features,iris[5])
+
+head(final.data)
+```
+
+
+
+* * *
+
+## Part 3: Splitting into test and train model
+
+```{r}
+set.seed(101)
+
+library(caTools)
+
+sample <- sample.split(final.data$Species, SplitRatio = .70)
+train <- subset(final.data, sample == TRUE)
+test <- subset(final.data, sample == FALSE)
+```
+
+
+
+
+## Part 4: Modeling
+
+```{r}
+library(class)
+predicted.species <- knn(train[1:4],test[1:4],train$Species,k=1)
+```
+
+```{r}
+predicted.species
+```
+
+misclassfication:-
+```{r}
+
+mean(test$Species != predicted.species)
+```
+
+Choosing a K value
+```{r}
+predicted.species <- NULL
+error.rate <- NULL
+
+for(i in 1:10){
+    set.seed(101)
+    predicted.species <- knn(train[1:4],test[1:4],train$Species,k=i)
+    error.rate[i] <- mean(test$Species != predicted.species)
+}
+
+```
+
+```{r}
+k.values <- 1:10
+error.df <- data.frame(error.rate,k.values)
+```
+
+```{r}
+pl <- ggplot(error.df,aes(x=k.values,y=error.rate)) + geom_point()
+pl + geom_line(lty="dotted",color='red')
+```
+The error drops to its lowest for k values between 2-6. Then it begins to jump back up again, this is due to how small the data set it. At k=10 you begin to approach setting k=10% of the data, which is quite large.
